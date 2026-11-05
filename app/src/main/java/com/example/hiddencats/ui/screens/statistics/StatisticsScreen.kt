@@ -74,10 +74,10 @@ fun StatisticsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = androidx.compose.ui.graphics.Color.Transparent
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -87,8 +87,8 @@ fun StatisticsScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
                     .widthIn(max = 600.dp)
+                    .fillMaxSize()
                     .testTag("stats_list"),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)

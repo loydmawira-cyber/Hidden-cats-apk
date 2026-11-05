@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.hiddencats.core.AppContainer
 import com.example.hiddencats.data.GameRepository
 import com.example.hiddencats.data.local.GameRecordEntity
+import com.example.hiddencats.domain.engine.PuzzleGenerator
+import com.example.hiddencats.domain.model.BoardSize
+import com.example.hiddencats.domain.model.Difficulty
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,7 +36,10 @@ class StatisticsViewModel(
         repository.gameRecords
     ) { games, wins, bestTime, hints, records ->
         val winPct = if (games > 0) ((wins.toFloat() / games.toFloat()) * 100).toInt() else 0
-        val catsFound = records.filter { it.isWin }.sumOf { it.boardDimension }
+        val catsFound = records.filter { it.isWin }.sumOf { rec ->
+            val diff = Difficulty.entries.firstOrNull { it.label == rec.difficulty || it.name == rec.difficulty } ?: Difficulty.NORMAL
+            PuzzleGenerator.targetCatsFor(BoardSize.fromDimension(rec.boardDimension), diff)
+        }
 
         StatsUiState(
             totalGames = games,
