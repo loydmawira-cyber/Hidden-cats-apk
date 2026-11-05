@@ -153,14 +153,30 @@ class GameViewModel(
         if (current.isCompleted || current.isGameOver || current.isPaused) return
 
         viewModelScope.launch {
-            val hasHints = repository.consumeHint()
-            if (hasHints || preferences.value.premiumUnlocked) {
-                _gameState.value = gameEngine.requestHint(current)
+            // Premium players get unlimited hints without spending the balance
+            val allowed = preferences.value.premiumUnlocked || repository.consumeHint()
+            val latest = _gameState.value
+            if (latest.isCompleted || latest.isGameOver) return@launch
+            if (allowed) {
+                _gameState.value = gameEngine.requestHint(latest)
                 soundHaptics.playHint(
                     sound = preferences.value.soundEnabled,
                     haptics = preferences.value.hapticsEnabled
                 )
+            } else {
+                _gameState.value = latest.copy(
+                    activeHintMessage = "Out of hints! Grab more in the Shop.",
+                    hintHighlightCells = emptySet()
+                )
             }
+        }
+    }
+
+    /** Called when the app goes to the background so the clock doesn't keep running. */
+    fun pauseIfPlaying() {
+        val current = _gameState.value
+        if (!current.isPaused && !current.isCompleted && !current.isGameOver) {
+            _gameState.value = current.copy(isPaused = true)
         }
     }
 
