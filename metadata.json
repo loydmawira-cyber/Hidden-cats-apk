@@ -1,0 +1,6 @@
+{
+  "name": "Hidden Cats: Color Logic",
+  "description": "Logic puzzle game where players find hidden cats on a colored grid using deductive clues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

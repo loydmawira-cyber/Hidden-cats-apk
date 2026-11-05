@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Hidden Cats</string>
+    <string name="game_title">Hidden Cats: Color Logic</string>
+    <string name="play">Play</string>
+    <string name="daily_challenge">Daily Challenge</string>
+    <string name="statistics">Statistics</string>
+    <string name="rules">Rules</string>
+    <string name="settings">Settings</string>
+    <string name="shop">Shop</string>
+</resources>
