@@ -118,7 +118,28 @@ class GameEngine(
         if (!state.canRedo) return state
         val move = state.redoHistory.last()
         val newRedo = state.redoHistory.dropLast(1)
-        return setCellState(state, move.row, move.col, move.newState).copy(redoHistory = newRedo)
+        val newBoard = state.boardStates.mapIndexed { r, rList ->
+            rList.mapIndexed { c, current ->
+                if (r == move.row && c == move.col) move.newState else current
+            }
+        }
+        val newWrong = state.wrongCells.toMutableSet().apply {
+            if (move.newState == CellState.CONFIRMED_CAT && !state.puzzle.grid[move.row][move.col].hasCat) {
+                add(move.row to move.col)
+            } else {
+                remove(move.row to move.col)
+            }
+        }
+        return checkWinCondition(
+            state.copy(
+                boardStates = newBoard,
+                moveHistory = state.moveHistory + move,
+                redoHistory = newRedo,
+                wrongCells = newWrong,
+                activeHintMessage = null,
+                hintHighlightCells = emptySet()
+            )
+        )
     }
 
     fun requestHint(state: GameState): GameState {

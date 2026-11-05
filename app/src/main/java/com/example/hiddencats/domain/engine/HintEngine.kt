@@ -28,10 +28,21 @@ class HintEngine {
                             val nc = c + dc
                             if (nr in 0 until dim && nc in 0 until dim && board[nr][nc] == CellState.CONFIRMED_CAT) {
                                 return HintResult(
-                                    explanation = "Cells ($r, $c) and ($nr, $nc) touch! Cats cannot touch horizontally, vertically, or diagonally.",
+                                    explanation = "Cells (row ${r + 1}, col ${c + 1}) and (row ${nr + 1}, col ${nc + 1}) touch! Cats cannot touch horizontally, vertically, or diagonally.",
                                     targetCells = setOf(r to c, nr to nc)
                                 )
                             }
+                        }
+                    }
+
+                    // Check same color in column
+                    val colColor = puzzle.grid[r][c].color
+                    for (r2 in 0 until dim) {
+                        if (r2 != r && board[r2][c] == CellState.CONFIRMED_CAT && puzzle.grid[r2][c].color == colColor) {
+                            return HintResult(
+                                explanation = "Column ${c + 1} has two ${colColor.displayName} cats! Cats cannot share the same color in the same column.",
+                                targetCells = setOf(r to c, r2 to c)
+                            )
                         }
                     }
 
@@ -40,7 +51,7 @@ class HintEngine {
                     for (c2 in 0 until dim) {
                         if (c2 != c && board[r][c2] == CellState.CONFIRMED_CAT && puzzle.grid[r][c2].color == color) {
                             return HintResult(
-                                explanation = "Row $r has two ${color.displayName} cats! Cats cannot share the same color in the same row.",
+                                explanation = "Row ${r + 1} has two ${color.displayName} cats! Cats cannot share the same color in the same row.",
                                 targetCells = setOf(r to c, r to c2)
                             )
                         }
@@ -57,7 +68,7 @@ class HintEngine {
                 val unknowns = (0 until dim).filter { board[r][it] == CellState.UNKNOWN || board[r][it] == CellState.POSSIBLE }
                 if (unknowns.isNotEmpty()) {
                     return HintResult(
-                        explanation = "Row $r already has all its $required cat(s). The remaining unmarked cells in this row must be empty.",
+                        explanation = "Row ${r + 1} already has all its $required cat(s). The remaining unmarked cells in this row must be empty.",
                         targetCells = unknowns.map { r to it }.toSet(),
                         suggestedState = CellState.EMPTY
                     )
@@ -73,7 +84,7 @@ class HintEngine {
                 val unknowns = (0 until dim).filter { board[it][c] == CellState.UNKNOWN || board[it][c] == CellState.POSSIBLE }
                 if (unknowns.isNotEmpty()) {
                     return HintResult(
-                        explanation = "Column $c already has all its $required cat(s). The remaining unmarked cells in this column must be empty.",
+                        explanation = "Column ${c + 1} already has all its $required cat(s). The remaining unmarked cells in this column must be empty.",
                         targetCells = unknowns.map { it to c }.toSet(),
                         suggestedState = CellState.EMPTY
                     )
@@ -100,7 +111,7 @@ class HintEngine {
                     }
                     if (unmarkedNeighbors.isNotEmpty()) {
                         return HintResult(
-                            explanation = "Because cell ($r, $c) contains a cat, all 8 surrounding cells must be marked Empty.",
+                            explanation = "Because the cell at row ${r + 1}, col ${c + 1} contains a cat, all 8 surrounding cells must be marked Empty.",
                             targetCells = unmarkedNeighbors.toSet(),
                             suggestedState = CellState.EMPTY
                         )
@@ -118,7 +129,7 @@ class HintEngine {
                         .filter { it != c && puzzle.grid[r][it].color == catColor && (board[r][it] == CellState.UNKNOWN || board[r][it] == CellState.POSSIBLE) }
                     if (sameColorUnknowns.isNotEmpty()) {
                         return HintResult(
-                            explanation = "Row $r already has a ${catColor.displayName} cat! Other ${catColor.displayName} cells in this row cannot have cats.",
+                            explanation = "Row ${r + 1} already has a ${catColor.displayName} cat! Other ${catColor.displayName} cells in this row cannot have cats.",
                             targetCells = sameColorUnknowns.map { r to it }.toSet(),
                             suggestedState = CellState.EMPTY
                         )
@@ -133,7 +144,7 @@ class HintEngine {
                 if (puzzle.grid[r][c].hasCat && board[r][c] != CellState.CONFIRMED_CAT) {
                     val cellColor = puzzle.grid[r][c].color
                     return HintResult(
-                        explanation = "A sneaky cat is hiding at cell ($r, $c) on the ${cellColor.displayName} tile!",
+                        explanation = "A sneaky cat is hiding at row ${r + 1}, col ${c + 1} on the ${cellColor.displayName} tile!",
                         targetCells = setOf(r to c),
                         suggestedState = CellState.CONFIRMED_CAT
                     )

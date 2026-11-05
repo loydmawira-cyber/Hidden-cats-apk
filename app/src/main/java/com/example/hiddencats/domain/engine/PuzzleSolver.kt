@@ -94,6 +94,71 @@ class PuzzleSolver {
     }
 
     /**
+     * Fast row-by-row solver used to prove a puzzle has exactly one solution.
+     * Returns up to [limit] solutions, each as a set of (row, col) cat cells.
+     */
+    fun countSolutions(
+        colorGrid: List<List<CellColor>>,
+        rowCounts: List<Int>,
+        colCounts: List<Int>,
+        limit: Int = 2
+    ): List<Set<Pair<Int, Int>>> {
+        val dim = colorGrid.size
+        val rowOptions: List<List<List<Int>>> = (0 until dim).map { r ->
+            columnCombos(dim, rowCounts[r]).filter { combo ->
+                combo.zipWithNext().all { (a, b) -> b - a > 1 } &&
+                    combo.map { colorGrid[r][it] }.toSet().size == combo.size
+            }
+        }
+
+        val solutions = mutableListOf<Set<Pair<Int, Int>>>()
+        val colUsed = IntArray(dim)
+        val colColors = Array(dim) { mutableSetOf<CellColor>() }
+        val chosen = Array<List<Int>>(dim) { emptyList() }
+
+        fun backtrack(r: Int) {
+            if (solutions.size >= limit) return
+            if (r == dim) {
+                if ((0 until dim).all { colUsed[it] == colCounts[it] }) {
+                    val set = mutableSetOf<Pair<Int, Int>>()
+                    for (row in 0 until dim) for (c in chosen[row]) set.add(row to c)
+                    solutions.add(set)
+                }
+                return
+            }
+            val prev = if (r > 0) chosen[r - 1] else emptyList()
+            for (combo in rowOptions[r]) {
+                if (combo.any { c -> prev.any { p -> kotlin.math.abs(c - p) <= 1 } }) continue
+                if (combo.any { c -> colUsed[c] + 1 > colCounts[c] || colorGrid[r][c] in colColors[c] }) continue
+                for (c in combo) { colUsed[c]++; colColors[c].add(colorGrid[r][c]) }
+                chosen[r] = combo
+                backtrack(r + 1)
+                for (c in combo) { colUsed[c]--; colColors[c].remove(colorGrid[r][c]) }
+                chosen[r] = emptyList()
+                if (solutions.size >= limit) return
+            }
+        }
+
+        backtrack(0)
+        return solutions
+    }
+
+    private fun columnCombos(dim: Int, size: Int): List<List<Int>> {
+        if (size == 0) return listOf(emptyList())
+        val result = mutableListOf<List<Int>>()
+        fun build(start: Int, current: MutableList<Int>) {
+            if (current.size == size) { result.add(current.toList()); return }
+            for (c in start until dim) {
+                current.add(c)
+                build(c + 1, current)
+                current.removeAt(current.size - 1)
+            }
+        }
+        build(0, mutableListOf())
+        return result
+    }
+
+    /**
      * Finds solutions for a given color grid, target cat count, and optional row/col clues.
      * Stops after finding maxSolutions to remain fast.
      */

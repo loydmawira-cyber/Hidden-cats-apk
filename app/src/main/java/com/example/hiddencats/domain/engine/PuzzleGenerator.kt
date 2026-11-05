@@ -13,6 +13,23 @@ class PuzzleGenerator(
     private val solver: PuzzleSolver = PuzzleSolver()
 ) {
 
+    companion object {
+        /** Cats hidden on a board for the given size and difficulty. */
+        fun targetCatsFor(size: BoardSize, difficulty: Difficulty): Int = when (difficulty) {
+            Difficulty.EASY -> (size.defaultCats - 1).coerceAtLeast(2)
+            Difficulty.NORMAL -> size.defaultCats
+            Difficulty.HARD -> size.defaultCats
+            Difficulty.EXPERT -> (size.defaultCats + 1).coerceAtMost(size.dimension)
+        }
+
+        private const val MAX_ATTEMPTS = 3000
+        private const val MAX_FIX_STEPS = 120
+    }
+
+    /**
+     * Generates a puzzle that is guaranteed to have exactly ONE solution.
+     * Generation is fully deterministic for a given seed (needed for the Daily Challenge).
+     */
     fun generate(
         size: BoardSize = BoardSize.SIX,
         difficulty: Difficulty = Difficulty.NORMAL,
@@ -27,107 +44,131 @@ class PuzzleGenerator(
             Difficulty.EXPERT -> (size.defaultColors + 1).coerceAtMost(CellColor.entries.size)
         }
         val colors = CellColor.palette(numColors)
-        val targetCats = when (difficulty) {
-            Difficulty.EASY -> (size.defaultCats - 1).coerceAtLeast(2)
-            Difficulty.NORMAL -> size.defaultCats
-            Difficulty.HARD -> size.defaultCats
-            Difficulty.EXPERT -> (size.defaultCats + 1).coerceAtMost(dimension)
-        }
+        val targetCats = targetCatsFor(size, difficulty)
 
-        var attempts = 0
-        while (attempts < 50) {
-            attempts++
-            // 1. Generate balanced colorful grid
-            val colorGrid = generateColorGrid(dimension, colors, random)
+        repeat(MAX_ATTEMPTS) {
+            val placedCats = placeCats(dimension, targetCats, random) ?: return@repeat
+            val colorGrid = buildUniqueColorGrid(dimension, colors, placedCats, random) ?: return@repeat
 
-            // 2. Find a valid placement of targetCats
-            val candidateCells = mutableListOf<Pair<Int, Int>>()
+            val rowCounts = (0 until dimension).map { r -> placedCats.count { it.first == r } }
+            val colCounts = (0 until dimension).map { c -> placedCats.count { it.second == c } }
+
+            if (!solver.validateFullBoard(colorGrid, placedCats, rowCounts, colCounts)) return@repeat
+
+            val rowColorCatMap = mutableMapOf<Int, Set<CellColor>>()
+            val colColorCatMap = mutableMapOf<Int, Set<CellColor>>()
             for (r in 0 until dimension) {
-                for (c in 0 until dimension) {
-                    candidateCells.add(r to c)
-                }
+                rowColorCatMap[r] = placedCats.filter { it.first == r }.map { colorGrid[it.first][it.second] }.toSet()
             }
-            candidateCells.shuffle(random)
-
-            val placedCats = mutableSetOf<Pair<Int, Int>>()
-            for ((r, c) in candidateCells) {
-                if (solver.isPlacementValid(r, c, colorGrid, placedCats)) {
-                    placedCats.add(r to c)
-                    if (placedCats.size == targetCats) break
-                }
+            for (c in 0 until dimension) {
+                colColorCatMap[c] = placedCats.filter { it.second == c }.map { colorGrid[it.first][it.second] }.toSet()
             }
 
-            if (placedCats.size == targetCats) {
-                val rowCounts = (0 until dimension).map { r -> placedCats.count { it.first == r } }
-                val colCounts = (0 until dimension).map { c -> placedCats.count { it.second == c } }
-
-                // Check solver confirms validity
-                if (solver.validateFullBoard(colorGrid, placedCats, rowCounts, colCounts)) {
-                    // Build row and col color maps
-                    val rowColorCatMap = mutableMapOf<Int, Set<CellColor>>()
-                    val colColorCatMap = mutableMapOf<Int, Set<CellColor>>()
-
-                    for (r in 0 until dimension) {
-                        val rowCats = placedCats.filter { it.first == r }
-                        rowColorCatMap[r] = rowCats.map { colorGrid[it.first][it.second] }.toSet()
-                    }
-                    for (c in 0 until dimension) {
-                        val colCats = placedCats.filter { it.second == c }
-                        colColorCatMap[c] = colCats.map { colorGrid[it.first][it.second] }.toSet()
-                    }
-
-                    // Build cell grid
-                    val grid = (0 until dimension).map { r ->
-                        (0 until dimension).map { c ->
-                            Cell(
-                                row = r,
-                                col = c,
-                                color = colorGrid[r][c],
-                                hasCat = placedCats.contains(r to c),
-                                state = CellState.UNKNOWN
-                            )
-                        }
-                    }
-
-                    return Puzzle(
-                        id = UUID.nameUUIDFromBytes("puzzle_$seed".toByteArray()).toString(),
-                        size = size,
-                        difficulty = difficulty,
-                        grid = grid,
-                        totalCats = targetCats,
-                        seed = seed,
-                        rowCatCounts = rowCounts,
-                        colCatCounts = colCounts,
-                        rowColorCatMap = rowColorCatMap,
-                        colColorCatMap = colColorCatMap
+            val grid = (0 until dimension).map { r ->
+                (0 until dimension).map { c ->
+                    Cell(
+                        row = r,
+                        col = c,
+                        color = colorGrid[r][c],
+                        hasCat = placedCats.contains(r to c),
+                        state = CellState.UNKNOWN
                     )
                 }
             }
+
+            return Puzzle(
+                id = UUID.nameUUIDFromBytes("puzzle_$seed".toByteArray()).toString(),
+                size = size,
+                difficulty = difficulty,
+                grid = grid,
+                totalCats = targetCats,
+                seed = seed,
+                rowCatCounts = rowCounts,
+                colCatCounts = colCounts,
+                rowColorCatMap = rowColorCatMap,
+                colColorCatMap = colColorCatMap
+            )
         }
 
-        // Deterministic fallback guarantee
+        // Extremely unlikely: deterministic fallback
         return createFallbackPuzzle(size, difficulty, seed, colors, targetCats)
     }
 
-    private fun generateColorGrid(
+    /** Randomised backtracking placement of cats: no touching (8-neighbour), at most 2 per row/column. */
+    private fun placeCats(dimension: Int, target: Int, random: Random): Set<Pair<Int, Int>>? {
+        val cats = mutableListOf<Pair<Int, Int>>()
+        var budget = 3000
+
+        fun valid(r: Int, c: Int): Boolean {
+            if (cats.any { (a, b) -> kotlin.math.abs(a - r) <= 1 && kotlin.math.abs(b - c) <= 1 }) return false
+            if (cats.count { it.first == r } >= 2) return false
+            if (cats.count { it.second == c } >= 2) return false
+            return true
+        }
+
+        fun backtrack(candidates: List<Pair<Int, Int>>): Boolean {
+            if (cats.size == target) return true
+            if (--budget < 0) return false
+            val usable = candidates.filter { (r, c) -> valid(r, c) }.shuffled(random)
+            if (usable.size < target - cats.size) return false
+            for (cell in usable.take(6)) {
+                cats.add(cell)
+                if (backtrack(usable.filter { it != cell })) return true
+                cats.removeAt(cats.size - 1)
+            }
+            return false
+        }
+
+        val all = (0 until dimension).flatMap { r -> (0 until dimension).map { c -> r to c } }
+        return if (backtrack(all)) cats.toSet() else null
+    }
+
+    /**
+     * Builds a colour grid for which [cats] is the ONLY valid solution.
+     * Recolouring a non-cat cell can never invalidate the intended solution, so we repeatedly
+     * recolour a cell used by an alternative solution until none remain.
+     */
+    private fun buildUniqueColorGrid(
         dimension: Int,
         palette: List<CellColor>,
+        cats: Set<Pair<Int, Int>>,
         random: Random
-    ): List<List<CellColor>> {
-        val grid = mutableListOf<MutableList<CellColor>>()
-        for (r in 0 until dimension) {
-            val row = mutableListOf<CellColor>()
-            for (c in 0 until dimension) {
-                val candidateColors = palette.filter { color ->
-                    val sameAsLeft = if (c > 0) row[c - 1] == color else false
-                    val sameAsTop = if (r > 0) grid[r - 1][c] == color else false
-                    !(sameAsLeft && sameAsTop)
-                }.ifEmpty { palette }
-                row.add(candidateColors.random(random))
+    ): List<List<CellColor>>? {
+        val grid = Array(dimension) { Array(dimension) { palette.random(random) } }
+
+        // Cats sharing a row/column must have different colours
+        var settled = false
+        for (pass in 0 until 40) {
+            var changed = false
+            for ((r, c) in cats) {
+                val clash = cats.any { (a, b) -> (a != r || b != c) && (a == r || b == c) && grid[a][b] == grid[r][c] }
+                if (clash) { grid[r][c] = palette.random(random); changed = true }
             }
-            grid.add(row)
+            if (!changed) { settled = true; break }
         }
-        return grid
+        if (!settled) return null
+
+        val rowCounts = (0 until dimension).map { r -> cats.count { it.first == r } }
+        val colCounts = (0 until dimension).map { c -> cats.count { it.second == c } }
+
+        repeat(MAX_FIX_STEPS) {
+            val view = grid.map { it.toList() }
+            val solutions = solver.countSolutions(view, rowCounts, colCounts, limit = 2)
+            if (solutions.size == 1 && solutions[0] == cats) return view
+            val other = solutions.firstOrNull { it != cats } ?: return if (solutions.isNotEmpty()) view else null
+
+            val changeable = other.filter { it !in cats }
+            if (changeable.isEmpty()) return null
+            val (x, y) = changeable.random(random)
+            val peers = other.filter { it != (x to y) && (it.first == x || it.second == y) }
+            grid[x][y] = if (peers.isNotEmpty() && random.nextFloat() < 0.7f) {
+                val p = peers.random(random)
+                grid[p.first][p.second]
+            } else {
+                palette.random(random)
+            }
+        }
+        return null
     }
 
     private fun createFallbackPuzzle(
