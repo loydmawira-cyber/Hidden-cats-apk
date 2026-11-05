@@ -300,12 +300,13 @@ fun GameStatusBar(state: GameState) {
                 StatPill { Text("Zen", fontWeight = FontWeight.ExtraBold, color = CatGreenSuccess) }
             }
 
-            // Clock: countdown in timed mode, stopwatch otherwise
-            val timed = state.mode == GameMode.TIMED
-            ClockPill(
-                text = formatClock(if (timed) state.remainingSeconds else state.elapsedSeconds),
-                danger = timed && state.remainingSeconds <= 30
-            )
+            // Countdown clock only exists in Timed mode (other modes track time silently for scoring)
+            if (state.mode == GameMode.TIMED) {
+                ClockPill(
+                    text = formatClock(state.remainingSeconds),
+                    danger = state.remainingSeconds <= 30
+                )
+            }
 
             // Cats found
             StatPill {
