@@ -39,7 +39,7 @@ class PlayBillingRepository(
     )
     override val productPrices: StateFlow<Map<String, String>> = _productPrices.asStateFlow()
 
-    private val _purchaseEvents = MutableSharedFlow<PurchaseResult>(replay = 1)
+    private val _purchaseEvents = MutableSharedFlow<PurchaseResult>(replay = 0, extraBufferCapacity = 8)
     override val purchaseEvents: SharedFlow<PurchaseResult> = _purchaseEvents.asSharedFlow()
 
     private val productDetailsMap = mutableMapOf<String, ProductDetails>()
