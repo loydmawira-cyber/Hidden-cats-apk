@@ -18,8 +18,18 @@ val CatBlueSky = Color(0xFF38BDF8)
 val CatPurpleLavender = Color(0xFFA855F7)
 
 // Dark Theme Variants
-val DarkBackground = Color(0xFF18181B)
-val DarkSurface = Color(0xFF27272A)
-val DarkSurfaceVariant = Color(0xFF3F3F46)
+val DarkBackground = Color(0xFF1B1038)
+val DarkSurface = Color(0xFF2E2060)
+val DarkSurfaceVariant = Color(0xFF45337F)
 val DarkPrimary = Color(0xFFFB923C)
 val DarkOnBackground = Color(0xFFF4F4F5)
+
+// Game-vibe palette
+val NightTop = Color(0xFF3B2578)
+val NightBottom = Color(0xFF150B33)
+val DayTop = Color(0xFFFFE7B0)
+val DayBottom = Color(0xFFFFB27A)
+val InkOutline = Color(0xFF2A1405)
+val WoodLight = Color(0xFF9A6338)
+val WoodDark = Color(0xFF5E3A1E)
+val GoldStar = Color(0xFFFFC21A)
