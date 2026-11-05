@@ -60,7 +60,7 @@ class GameRepository(
         dateKey: String = getTodayUtcDateKey()
     ) {
         val record = GameRecordEntity(
-            id = id,
+            id = "${id}_${System.currentTimeMillis()}",
             difficulty = difficulty.label,
             boardDimension = boardDimension,
             mode = mode,
