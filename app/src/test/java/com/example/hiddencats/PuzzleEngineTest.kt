@@ -5,6 +5,7 @@ import com.example.hiddencats.billing.PurchaseResult
 import com.example.hiddencats.domain.engine.*
 import com.example.hiddencats.domain.model.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -174,10 +175,14 @@ class PuzzleEngineTest {
         val isReady = fakeBilling.isReady.first()
         assertTrue(isReady)
 
+        // Events are no longer replayed, so start collecting before the purchase happens
+        val pending = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined).let { scope ->
+            scope.async(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) { fakeBilling.purchaseEvents.first() }
+        }
         fakeBilling.launchBillingFlow(null, "premium_upgrade")
         testScheduler.advanceUntilIdle()
 
-        val event = fakeBilling.purchaseEvents.first()
+        val event = pending.await()
         assertTrue(event is PurchaseResult.Success)
         assertEquals("premium_upgrade", (event as PurchaseResult.Success).productId)
     }
