@@ -60,10 +60,11 @@ fun ShopScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
                 )
             )
-        }
+        },
+        containerColor = androidx.compose.ui.graphics.Color.Transparent
     ) { padding ->
         LazyColumn(
             modifier = Modifier
