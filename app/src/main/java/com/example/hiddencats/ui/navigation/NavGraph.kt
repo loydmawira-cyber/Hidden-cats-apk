@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.hiddencats.core.AppContainer
+import com.example.hiddencats.ui.components.GameBackground
 import com.example.hiddencats.domain.model.BoardSize
 import com.example.hiddencats.domain.model.Difficulty
 import com.example.hiddencats.domain.model.GameMode
@@ -154,6 +155,8 @@ fun NavGraph(
             val diffStr = backStackEntry.arguments?.getString("difficulty") ?: Difficulty.EASY.name
             val modeStr = backStackEntry.arguments?.getString("mode") ?: GameMode.CLASSIC.name
 
+            val isDailyMode = modeStr == GameMode.DAILY.name
+
             ResultsScreen(
                 won = won,
                 timeSeconds = timeSeconds,
@@ -170,7 +173,7 @@ fun NavGraph(
                             mode = modeStr,
                             difficulty = diffStr,
                             boardSize = boardDimension,
-                            isDaily = false
+                            isDaily = isDailyMode
                         )
                     ) {
                         popUpTo(Screen.Results.route) { inclusive = true }
@@ -179,7 +182,7 @@ fun NavGraph(
                 onNextPuzzle = {
                     navController.navigate(
                         Screen.Game.createRoute(
-                            mode = modeStr,
+                            mode = if (isDailyMode) GameMode.CLASSIC.name else modeStr,
                             difficulty = diffStr,
                             boardSize = boardDimension,
                             isDaily = false
@@ -200,36 +203,44 @@ fun NavGraph(
             val viewModel: StatisticsViewModel = viewModel(
                 factory = StatisticsViewModel.provideFactory(appContainer)
             )
+            GameBackground {
             StatisticsScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+            }
         }
 
         composable(Screen.Settings.route) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModel.provideFactory(appContainer)
             )
+            GameBackground {
             SettingsScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+            }
         }
 
         composable(Screen.Rules.route) {
+            GameBackground {
             RulesScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
+            }
         }
 
         composable(Screen.Shop.route) {
             val viewModel: ShopViewModel = viewModel(
                 factory = ShopViewModel.provideFactory(appContainer)
             )
+            GameBackground {
             ShopScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+            }
         }
     }
 }
