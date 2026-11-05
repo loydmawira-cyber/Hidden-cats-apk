@@ -1,5 +1,9 @@
 package com.example.hiddencats.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,33 +11,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hiddencats.domain.model.Cell
-import com.example.hiddencats.domain.model.CellColor
+import com.example.hiddencats.domain.model.CellState
 import com.example.hiddencats.domain.model.GameState
-import com.example.hiddencats.ui.theme.CatAmberAccent
 import com.example.hiddencats.ui.theme.CatGreenSuccess
 import com.example.hiddencats.ui.theme.CatOrangePrimary
+import com.example.hiddencats.ui.theme.CatRedMistake
+import com.example.hiddencats.ui.theme.InkOutline
+import com.example.hiddencats.ui.theme.WoodDark
+import com.example.hiddencats.ui.theme.WoodLight
 
 @Composable
 fun PuzzleBoardView(
@@ -49,124 +54,118 @@ fun PuzzleBoardView(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        val availableWidth = maxWidth - 16.dp
-        // Reserve space for row indicator (e.g. 52dp)
-        val indicatorSize = 44.dp
-        val boardGridWidth = availableWidth - indicatorSize
-        val cellSize = (boardGridWidth / dim).coerceIn(34.dp, 64.dp)
+        // Everything that isn't a cell: wooden frame (6 + 3 border) x2, inner padding 6 x2, clue gutter.
+        val clueGutter = 34.dp
+        val chrome = 2 * (6.dp + 3.dp) + 2 * 6.dp + 4.dp
+        // Fit the board to the width on any phone (9x9 included) instead of overflowing.
+        val cellSize = ((maxWidth - chrome - clueGutter) / dim).coerceAtMost(60.dp)
 
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 4.dp,
-            modifier = Modifier.padding(4.dp).testTag("puzzle_board")
+        Box(
+            modifier = Modifier
+                .testTag("puzzle_board")
+                .clip(RoundedCornerShape(24.dp))
+                .background(Brush.verticalGradient(listOf(WoodLight, WoodDark)))
+                .border(3.dp, InkOutline, RoundedCornerShape(24.dp))
+                .padding(6.dp)
         ) {
             Column(
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top Column Clues
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    // Empty top-left corner
-                    Box(modifier = Modifier.size(indicatorSize, indicatorSize))
-
-                    // Column Clue Headers
+                // Column clues
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) {
+                    Box(modifier = Modifier.size(clueGutter, clueGutter))
                     for (c in 0 until dim) {
-                        val requiredCats = puzzle.colCatCounts[c]
-                        val confirmedInCol = (0 until dim).count { state.boardStates[it][c] == com.example.hiddencats.domain.model.CellState.CONFIRMED_CAT }
-                        val isColFulfilled = confirmedInCol == requiredCats && requiredCats > 0
-
-                        Column(
-                            modifier = Modifier.size(cellSize, indicatorSize),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (isColFulfilled) CatGreenSuccess else CatOrangePrimary.copy(alpha = 0.15f),
-                                modifier = Modifier.size(26.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "$requiredCats",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 13.sp,
-                                        color = if (isColFulfilled) Color.White else CatOrangePrimary
-                                    )
-                                }
-                            }
-                            // Mini dots of colors with cats in this column
-                            Row(
-                                modifier = Modifier.padding(top = 2.dp),
-                                horizontalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                val colors = puzzle.colColorCatMap[c] ?: emptySet()
-                                colors.forEach { color ->
-                                    Box(
-                                        modifier = Modifier
-                                            .size(5.dp)
-                                            .clip(CircleShape)
-                                            .background(color.composeColor(isColorBlindMode))
-                                    )
-                                }
-                            }
+                        val confirmed = (0 until dim).count { state.boardStates[it][c] == CellState.CONFIRMED_CAT }
+                        Box(modifier = Modifier.size(cellSize, clueGutter), contentAlignment = Alignment.Center) {
+                            ClueBadge(required = puzzle.colCatCounts[c], confirmed = confirmed, cellSize = cellSize)
                         }
                     }
                 }
 
-                // Grid with Left Row Clues
+                // Rows: clue + cells
                 for (r in 0 until dim) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        // Row Clue Header (Left)
-                        val requiredCats = puzzle.rowCatCounts[r]
-                        val confirmedInRow = (0 until dim).count { state.boardStates[r][it] == com.example.hiddencats.domain.model.CellState.CONFIRMED_CAT }
-                        val isRowFulfilled = confirmedInRow == requiredCats && requiredCats > 0
-
-                        Row(
-                            modifier = Modifier.size(indicatorSize, cellSize),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (isRowFulfilled) CatGreenSuccess else CatOrangePrimary.copy(alpha = 0.15f),
-                                modifier = Modifier.size(26.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "$requiredCats",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 13.sp,
-                                        color = if (isRowFulfilled) Color.White else CatOrangePrimary
-                                    )
-                                }
-                            }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        val confirmed = (0 until dim).count { state.boardStates[r][it] == CellState.CONFIRMED_CAT }
+                        Box(modifier = Modifier.size(clueGutter, cellSize), contentAlignment = Alignment.Center) {
+                            ClueBadge(required = puzzle.rowCatCounts[r], confirmed = confirmed, cellSize = cellSize)
                         }
-
-                        // Cells for row r
                         for (c in 0 until dim) {
                             val cell = puzzle.grid[r][c].copy(state = state.boardStates[r][c])
-                            val isHighlighted = state.hintHighlightCells.contains(r to c)
-                            val isWrong = state.wrongCells.contains(r to c)
-
                             CellView(
                                 cell = cell,
                                 cellSize = cellSize,
                                 isColorBlindMode = isColorBlindMode,
-                                isHighlighted = isHighlighted,
-                                isWrong = isWrong,
-                                onClick = { onCellClick(r, c) }
+                                isHighlighted = state.hintHighlightCells.contains(r to c),
+                                isWrong = state.wrongCells.contains(r to c),
+                                onClick = { onCellClick(r, c) },
+                                modifier = Modifier.graphicsLayer { alpha = if (state.isPaused) 0f else 1f }
                             )
                         }
                     }
                 }
             }
+
+            if (state.isPaused) {
+                Text(
+                    text = "PAUSED",
+                    modifier = Modifier.align(Alignment.Center),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }
+
+/** Number badge for a row/column: orange while open, green when exactly met, red when too many cats. */
+@Composable
+private fun ClueBadge(required: Int, confirmed: Int, cellSize: Dp) {
+    val state = when {
+        confirmed > required -> BadgeState.OVER
+        confirmed == required && required > 0 -> BadgeState.DONE
+        required == 0 -> BadgeState.ZERO
+        else -> BadgeState.OPEN
+    }
+    val bg by animateColorAsState(
+        targetValue = when (state) {
+            BadgeState.DONE -> CatGreenSuccess
+            BadgeState.OVER -> CatRedMistake
+            BadgeState.ZERO -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+            BadgeState.OPEN -> CatOrangePrimary.copy(alpha = 0.18f)
+        },
+        label = "clue_bg"
+    )
+    val pop by animateFloatAsState(
+        targetValue = if (state == BadgeState.DONE) 1.12f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "clue_pop"
+    )
+    val fg = when (state) {
+        BadgeState.DONE, BadgeState.OVER -> Color.White
+        BadgeState.ZERO -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+        BadgeState.OPEN -> CatOrangePrimary
+    }
+    val diameter = (cellSize * 0.72f).coerceIn(22.dp, 30.dp)
+    Box(
+        modifier = Modifier
+            .size(diameter)
+            .graphicsLayer { scaleX = pop; scaleY = pop }
+            .clip(CircleShape)
+            .background(bg),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "$required",
+            fontWeight = FontWeight.Black,
+            fontSize = (diameter.value * 0.5f).sp,
+            color = fg
+        )
+    }
+}
+
+private enum class BadgeState { OPEN, DONE, OVER, ZERO }

@@ -1,7 +1,19 @@
 package com.example.hiddencats.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,15 +25,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -52,15 +68,23 @@ fun CellView(
         label = "cell_bg"
     )
 
-    val shape = RoundedCornerShape(10.dp)
+    val shape: Shape = RoundedCornerShape((cellSize.value * 0.22f).coerceIn(6f, 12f).dp)
+    val edgeColor = baseColor.darken(0.35f)
     val borderColor = when {
         isWrong -> CatRedMistake
         isHighlighted -> CatAmberAccent
-        else -> Color.Black.copy(alpha = 0.15f)
+        else -> edgeColor
     }
-    val borderWidth = when {
-        isWrong || isHighlighted -> 3.dp
-        else -> 1.dp
+    val borderWidth = if (isWrong || isHighlighted) 3.dp else 1.5.dp
+
+    // Shake the tile when a wrong cat is placed
+    val shake = remember { Animatable(0f) }
+    LaunchedEffect(isWrong) {
+        if (isWrong) {
+            for (d in listOf(-9f, 9f, -7f, 7f, -3f, 0f)) shake.animateTo(d, tween(45))
+        } else {
+            shake.snapTo(0f)
+        }
     }
 
     val stateDesc = when (cell.state) {
@@ -73,10 +97,15 @@ fun CellView(
     Box(
         modifier = modifier
             .size(cellSize)
-            .padding(2.dp)
-            .shadow(elevation = if (cell.state == CellState.CONFIRMED_CAT) 3.dp else 1.dp, shape = shape)
+            .padding(1.5.dp)
+            .graphicsLayer { translationX = shake.value * density }
+            .shadow(elevation = if (cell.state == CellState.CONFIRMED_CAT) 4.dp else 1.5.dp, shape = shape)
             .clip(shape)
-            .background(animatedBgColor)
+            .background(
+                Brush.verticalGradient(
+                    listOf(animatedBgColor.lighten(0.2f), animatedBgColor, animatedBgColor.darken(0.1f))
+                )
+            )
             .border(borderWidth, borderColor, shape)
             .clickable(onClick = onClick)
             .semantics {
@@ -85,41 +114,55 @@ fun CellView(
             .testTag("cell_${cell.row}_${cell.col}"),
         contentAlignment = Alignment.Center
     ) {
+        if (isHighlighted) HintGlow()
+        if (isWrong) Box(Modifier.fillMaxSize().background(CatRedMistake.copy(alpha = 0.28f)))
+
         // Color-blind symbol indicator at top corner
         if (isColorBlindMode) {
             Text(
                 text = cell.color.symbolChar,
                 fontSize = (cellSize.value * 0.22f).sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black.copy(alpha = 0.35f),
+                color = Color.Black.copy(alpha = 0.4f),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(3.dp)
             )
         }
 
-        // Cell State Visual Content
+        // Cat pops in with a bouncy spring
+        AnimatedVisibility(
+            visible = cell.state == CellState.CONFIRMED_CAT,
+            enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)) + fadeIn(tween(120)),
+            exit = scaleOut(tween(120)) + fadeOut(tween(120))
+        ) {
+            CatFaceIcon(size = cellSize * 0.76f)
+        }
+
         when (cell.state) {
-            CellState.CONFIRMED_CAT -> {
-                CatFaceIcon(size = cellSize * 0.72f)
-            }
-            CellState.EMPTY -> {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = null,
-                    tint = Color.Black.copy(alpha = 0.45f),
-                    modifier = Modifier.size(cellSize * 0.5f)
-                )
-            }
-            CellState.POSSIBLE -> {
-                CatPawIcon(
-                    size = cellSize * 0.5f,
-                    tint = Color.Black.copy(alpha = 0.4f)
-                )
-            }
-            CellState.UNKNOWN -> {
-                // Blank canvas
-            }
+            CellState.EMPTY -> Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.42f),
+                modifier = Modifier.size(cellSize * 0.46f)
+            )
+            CellState.POSSIBLE -> CatPawIcon(
+                size = cellSize * 0.5f,
+                tint = Color.Black.copy(alpha = 0.45f)
+            )
+            else -> Unit
         }
     }
+}
+
+@Composable
+private fun HintGlow() {
+    val transition = rememberInfiniteTransition(label = "hint_glow")
+    val alpha by transition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse),
+        label = "hint_glow_alpha"
+    )
+    Box(Modifier.fillMaxSize().background(CatAmberAccent.copy(alpha = alpha)))
 }
