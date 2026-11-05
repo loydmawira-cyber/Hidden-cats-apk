@@ -82,10 +82,10 @@ fun SettingsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = androidx.compose.ui.graphics.Color.Transparent
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -95,8 +95,8 @@ fun SettingsScreen(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .widthIn(max = 600.dp)
+                    .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
