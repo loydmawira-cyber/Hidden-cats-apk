@@ -45,10 +45,11 @@ fun RulesScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
                 )
             )
-        }
+        },
+        containerColor = androidx.compose.ui.graphics.Color.Transparent
     ) { padding ->
         Column(
             modifier = Modifier
