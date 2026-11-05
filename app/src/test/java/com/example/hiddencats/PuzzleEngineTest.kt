@@ -181,4 +181,19 @@ class PuzzleEngineTest {
         assertTrue(event is PurchaseResult.Success)
         assertEquals("premium_upgrade", (event as PurchaseResult.Success).productId)
     }
+
+    @Test
+    fun `generated puzzles have exactly one solution`() {
+        val generator = PuzzleGenerator()
+        val solver = PuzzleSolver()
+        for (size in BoardSize.entries) {
+            for (diff in Difficulty.entries) {
+                val puzzle = generator.generate(size, diff, seed = 99L + size.dimension)
+                val colors = puzzle.grid.map { row -> row.map { it.color } }
+                val solutions = solver.countSolutions(colors, puzzle.rowCatCounts, puzzle.colCatCounts, 2)
+                assertEquals("${size.label} ${diff.label}", 1, solutions.size)
+                assertEquals(puzzle.catCoordinates, solutions[0])
+            }
+        }
+    }
 }
