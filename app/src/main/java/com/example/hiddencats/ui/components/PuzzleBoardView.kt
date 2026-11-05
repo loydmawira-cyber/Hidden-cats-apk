@@ -56,9 +56,9 @@ fun PuzzleBoardView(
     ) {
         // Everything that isn't a cell: wooden frame (6 + 3 border) x2, inner padding 6 x2, clue gutter.
         val clueGutter = 34.dp
-        val chrome = 2 * (6.dp + 3.dp) + 2 * 6.dp + 4.dp
+        val chrome = 34.dp
         // Fit the board to the width on any phone (9x9 included) instead of overflowing.
-        val cellSize = ((maxWidth - chrome - clueGutter) / dim).coerceAtMost(60.dp)
+        val cellSize = minOf((maxWidth - chrome - clueGutter) / dim, 60.dp)
 
         Box(
             modifier = Modifier
