@@ -3,6 +3,7 @@ package com.example.hiddencats.ui.screens.results
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,23 +25,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -49,12 +41,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hiddencats.ui.components.CatFaceIcon
+import com.example.hiddencats.ui.components.ConfettiBurst
+import com.example.hiddencats.ui.components.GameBackground
+import com.example.hiddencats.ui.components.GameButton
+import com.example.hiddencats.ui.components.GameButtonText
+import com.example.hiddencats.ui.components.GamePanel
+import com.example.hiddencats.ui.components.OutlinedTitle
+import com.example.hiddencats.ui.components.StarRow
 import com.example.hiddencats.ui.theme.CatAmberAccent
 import com.example.hiddencats.ui.theme.CatGreenSuccess
 import com.example.hiddencats.ui.theme.CatOrangePrimary
 import com.example.hiddencats.ui.theme.CatRedMistake
+import com.example.hiddencats.ui.theme.InkOutline
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun prettify(raw: String): String =
+    raw.lowercase().replaceFirstChar { it.uppercase() }
+
+private fun clock(seconds: Long): String {
+    val s = seconds.coerceAtLeast(0)
+    return "%d:%02d".format(s / 60, s % 60)
+}
+
 @Composable
 fun ResultsScreen(
     won: Boolean,
@@ -77,153 +84,140 @@ fun ResultsScreen(
         onGoHome()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (won) "Puzzle Solved!" else "Game Over", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Column(
+    GameBackground {
+        Scaffold(containerColor = Color.Transparent) { innerPadding ->
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .widthIn(max = 600.dp)
-                    .verticalScroll(scrollState)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(innerPadding),
+                contentAlignment = Alignment.TopCenter
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(100.dp)
-                        .background(if (won) CatAmberAccent else CatRedMistake.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
+                        .widthIn(max = 600.dp)
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CatFaceIcon(size = 70.dp)
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(CircleShape)
+                            .background(if (won) CatAmberAccent else Color(0xFFCBD5E1))
+                            .border(5.dp, InkOutline, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CatFaceIcon(size = 80.dp, catColor = if (won) Color(0xFFF97316) else Color(0xFF9CA3AF))
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                Text(
-                    text = if (won) "Purr-fect Logic!" else "Nice Try!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (won) CatGreenSuccess else CatRedMistake
-                )
+                    OutlinedTitle(
+                        text = if (won) "PUZZLE SOLVED!" else "GAME OVER",
+                        fontSize = 32.sp,
+                        fill = if (won) Color.White else Color(0xFFFFB4B4)
+                    )
 
-                Text(
-                    text = if (won) "All hidden cats successfully uncovered!" else "Cats proved to be too sneaky this time.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    Text(
+                        text = if (won) "Purr-fect logic! All hidden cats uncovered." else "The cats were too sneaky this time.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f)
+                    )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                if (won) {
-                    Row(horizontalArrangement = Arrangement.Center) {
-                        for (s in 1..3) {
-                            val earned = s <= stars
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Star $s",
-                                tint = if (earned) CatAmberAccent else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .padding(horizontal = 4.dp)
-                            )
+                    if (won) {
+                        StarRow(stars = stars, starSize = 52.dp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    GamePanel(modifier = Modifier.fillMaxWidth()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            ResultRow(label = "Final Score", value = "$score pts", highlight = true)
+                            ResultRow(label = "Time", value = clock(timeSeconds))
+                            ResultRow(label = "Moves", value = "$movesCount")
+                            ResultRow(label = "Hints Used", value = "$hintsUsed")
+                            ResultRow(label = "Board", value = "${boardSize}×$boardSize • ${prettify(difficulty)} • ${prettify(mode)}")
                         }
                     }
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
 
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ResultRow(label = "Final Score", value = "$score pts", highlight = true)
-                        ResultRow(label = "Time Elapsed", value = "${timeSeconds}s")
-                        ResultRow(label = "Moves Count", value = "$movesCount")
-                        ResultRow(label = "Hints Used", value = "$hintsUsed")
-                        ResultRow(label = "Board & Mode", value = "${boardSize}x$boardSize • $difficulty • $mode")
-                    }
-                }
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Button(
-                    onClick = onNextPuzzle,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CatOrangePrimary),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                        .testTag("results_next_button")
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Next Puzzle", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onPlayAgain,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.weight(1f).height(48.dp)
+                    GameButton(
+                        onClick = onNextPuzzle,
+                        color = CatGreenSuccess,
+                        height = 58.dp,
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("results_next_button")
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Retry")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            GameButtonText(if (won) "Next Puzzle" else "New Puzzle", fontSize = 20.sp)
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    "I solved a ${boardSize}x$boardSize puzzle in Hidden Cats: Color Logic with $score points and $stars stars! 🐾"
-                                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GameButton(
+                            onClick = onPlayAgain,
+                            color = Color(0xFF5B8DEF),
+                            height = 48.dp,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            GameButtonText("Retry", fontSize = 16.sp)
+                        }
+
+                        // Only offer sharing a score you actually earned
+                        if (won) {
+                            GameButton(
+                                onClick = {
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(
+                                            Intent.EXTRA_TEXT,
+                                            "I solved a ${boardSize}x$boardSize puzzle in Hidden Cats: Color Logic with $score points and $stars stars! 🐾"
+                                        )
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share your score"))
+                                },
+                                color = CatOrangePrimary,
+                                height = 48.dp,
+                                modifier = Modifier.weight(1f).testTag("results_share_button")
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, tint = Color.White)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                GameButtonText("Share", fontSize = 16.sp)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share your score"))
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.weight(1f).height(48.dp).testTag("results_share_button")
-                    ) {
-                        Icon(Icons.Default.Share, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Share")
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedButton(
-                    onClick = onGoHome,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth().height(48.dp).testTag("results_home_button")
-                ) {
-                    Icon(Icons.Default.Home, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Back to Home")
+                    GameButton(
+                        onClick = onGoHome,
+                        color = Color(0xFF8B8FA8),
+                        height = 48.dp,
+                        modifier = Modifier.fillMaxWidth().testTag("results_home_button")
+                    ) {
+                        Icon(Icons.Default.Home, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        GameButtonText("Back to Home", fontSize = 16.sp)
+                    }
                 }
             }
         }
+
+        if (won) ConfettiBurst()
     }
 }
 
@@ -237,12 +231,13 @@ private fun ResultRow(label: String, value: String, highlight: Boolean = false) 
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            style = if (highlight) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium,
+            style = if (highlight) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (highlight) FontWeight.Black else FontWeight.Bold,
             color = if (highlight) CatOrangePrimary else MaterialTheme.colorScheme.onSurface
         )
     }
