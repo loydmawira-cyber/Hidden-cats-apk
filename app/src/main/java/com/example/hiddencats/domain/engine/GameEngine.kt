@@ -101,7 +101,12 @@ class GameEngine(
         }
 
         val newWrong = state.wrongCells.toMutableSet().apply {
-            remove(lastMove.row to lastMove.col)
+            // Undoing the removal of a wrong cat puts that wrong cat (and its red marker) back
+            if (lastMove.previousState == CellState.CONFIRMED_CAT && !state.puzzle.grid[lastMove.row][lastMove.col].hasCat) {
+                add(lastMove.row to lastMove.col)
+            } else {
+                remove(lastMove.row to lastMove.col)
+            }
         }
 
         return state.copy(
