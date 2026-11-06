@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "825716216095",
+    "project_id": "hidden-d02f4",
+    "storage_bucket": "hidden-d02f4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825716216095:android:608e754165c1b73808e02a",
+        "android_client_info": {
+          "package_name": "com.smarttechlab.hiddencats"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "825716216095-99sf0jhjcun1ig2g6o7p2t93a46amko9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarttechlab.hiddencats",
+            "certificate_hash": "02e45b525a24b04812d22d2d59d5d69fba13418a"
+          }
+        },
+        {
+          "client_id": "825716216095-5pmjg2d7f90o9caij05117u2fh2iohoc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9pBu22B_EbVztPZ_GIV9GsltlzEvYAFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "825716216095-5pmjg2d7f90o9caij05117u2fh2iohoc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
