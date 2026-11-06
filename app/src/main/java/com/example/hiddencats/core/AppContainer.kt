@@ -1,6 +1,9 @@
 package com.example.hiddencats.core
 
 import android.content.Context
+import com.example.hiddencats.ads.AdManager
+import com.example.hiddencats.ads.AdsController
+import com.example.hiddencats.ads.StubAdManager
 import com.example.hiddencats.billing.BillingRepository
 import com.example.hiddencats.billing.PlayBillingRepository
 import com.example.hiddencats.data.GameRepository
@@ -58,5 +61,14 @@ class AppContainer(context: Context) {
 
     val billingRepository: BillingRepository by lazy {
         PlayBillingRepository(appContext)
+    }
+
+    /** Swap StubAdManager for AdMobAdManager once ads are connected (see docs/ADS_SETUP.md). */
+    val adManager: AdManager by lazy {
+        StubAdManager()
+    }
+
+    val adsController: AdsController by lazy {
+        AdsController(adManager = adManager, repository = gameRepository)
     }
 }
