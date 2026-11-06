@@ -1,8 +1,10 @@
 package com.example.hiddencats.ui.screens.game
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.hiddencats.ads.AdsController
 import com.example.hiddencats.core.AppContainer
 import com.example.hiddencats.core.SoundHapticsManager
 import com.example.hiddencats.data.GameRepository
@@ -32,6 +34,7 @@ class GameViewModel(
     isDaily: Boolean,
     private val repository: GameRepository,
     private val soundHaptics: SoundHapticsManager,
+    private val ads: AdsController,
     private val gameEngine: GameEngine = GameEngine()
 ) : ViewModel() {
 
@@ -53,11 +56,26 @@ class GameViewModel(
         initialValue = PlayerPreferences()
     )
 
+    private val _showHintOffer = MutableStateFlow(false)
+    /** True when the player is out of hints and we offer a rewarded ad / the shop. */
+    val showHintOffer: StateFlow<Boolean> = _showHintOffer.asStateFlow()
+
+    private val _hintOfferMessage = MutableStateFlow<String?>(null)
+    val hintOfferMessage: StateFlow<String?> = _hintOfferMessage.asStateFlow()
+
+    val rewardedReady: StateFlow<Boolean> = ads.rewardedReady
+
     private var timerJob: Job? = null
     private var hasRecordedCompletion = false
 
     init {
         startTimer()
+        // Close the offer automatically once hints arrive (e.g. after buying in the shop).
+        viewModelScope.launch {
+            preferences.collect { p ->
+                if (_showHintOffer.value && (p.hintBalance > 0 || p.premiumUnlocked)) dismissHintOffer()
+            }
+        }
     }
 
     private fun startTimer() {
@@ -164,10 +182,31 @@ class GameViewModel(
                     haptics = preferences.value.hapticsEnabled
                 )
             } else {
-                _gameState.value = latest.copy(
-                    activeHintMessage = "Out of hints! Grab more in the Shop.",
-                    hintHighlightCells = emptySet()
-                )
+                // Pause the clock and offer a rewarded ad or the shop.
+                _gameState.value = latest.copy(isPaused = true, hintHighlightCells = emptySet())
+                _hintOfferMessage.value = null
+                _showHintOffer.value = true
+            }
+        }
+    }
+
+    fun dismissHintOffer() {
+        _showHintOffer.value = false
+        _hintOfferMessage.value = null
+        val cur = _gameState.value
+        if (cur.isPaused && !cur.isCompleted && !cur.isGameOver) {
+            _gameState.value = cur.copy(isPaused = false)
+        }
+    }
+
+    /** Rewarded video -> +hints -> immediately use one. */
+    fun watchAdForHint(activity: Activity) {
+        ads.showRewardedHint(activity) { earned ->
+            if (earned) {
+                dismissHintOffer()
+                requestHint()
+            } else {
+                _hintOfferMessage.value = "Ad unavailable right now. Please try again later."
             }
         }
     }
@@ -273,6 +312,7 @@ class GameViewModel(
                         isDaily = isDaily,
                         repository = appContainer.gameRepository,
                         soundHaptics = appContainer.soundHapticsManager,
+                        ads = appContainer.adsController,
                         gameEngine = appContainer.gameEngine
                     ) as T
                 }

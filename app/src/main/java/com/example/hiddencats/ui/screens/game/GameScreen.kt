@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.hiddencats.core.findActivity
 import com.example.hiddencats.domain.model.GameMode
 import com.example.hiddencats.domain.model.GameState
 import com.example.hiddencats.ui.components.CatFaceIcon
@@ -94,9 +96,14 @@ private fun formatClock(totalSeconds: Int): String {
 fun GameScreen(
     viewModel: GameViewModel,
     onNavigateBack: () -> Unit,
-    onGameFinished: (GameState) -> Unit
+    onGameFinished: (GameState) -> Unit,
+    onNavigateShop: () -> Unit = {}
 ) {
     val state by viewModel.gameState.collectAsState()
+    val showHintOffer by viewModel.showHintOffer.collectAsState()
+    val hintOfferMessage by viewModel.hintOfferMessage.collectAsState()
+    val rewardedReady by viewModel.rewardedReady.collectAsState()
+    val activity = LocalContext.current.findActivity()
     val selectedTool by viewModel.selectedTool.collectAsState()
     val preferences by viewModel.preferences.collectAsState()
     val scrollState = rememberScrollState()
@@ -240,7 +247,49 @@ fun GameScreen(
                 }
             }
 
-            if (state.isPaused) {
+            if (showHintOffer) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.dismissHintOffer() },
+                    shape = RoundedCornerShape(28.dp),
+                    title = { Text("Out of hints!", fontWeight = FontWeight.Black) },
+                    text = {
+                        Column {
+                            Text("Watch a short ad for a free hint, or grab more in the Shop.")
+                            hintOfferMessage?.let {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(it, color = CatRedMistake, fontSize = 13.sp)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (rewardedReady && activity != null) {
+                                GameButton(
+                                    onClick = { viewModel.watchAdForHint(activity) },
+                                    height = 46.dp,
+                                    color = CatGreenSuccess,
+                                    modifier = Modifier.width(180.dp).testTag("hint_watch_ad_button")
+                                ) { GameButtonText("Watch ad: +1 hint", fontSize = 14.sp) }
+                            }
+                            GameButton(
+                                onClick = onNavigateShop,
+                                height = 46.dp,
+                                modifier = Modifier.width(180.dp).testTag("hint_shop_button")
+                            ) { GameButtonText("Open Shop", fontSize = 14.sp) }
+                        }
+                    },
+                    dismissButton = {
+                        GameButton(
+                            onClick = { viewModel.dismissHintOffer() },
+                            height = 46.dp,
+                            color = Color(0xFF8B8FA8),
+                            modifier = Modifier.width(90.dp)
+                        ) { GameButtonText("Not now", fontSize = 14.sp) }
+                    }
+                )
+            }
+
+            if (state.isPaused && !showHintOffer) {
                 PauseDialog(
                     onResume = { viewModel.togglePause() },
                     onRestart = { viewModel.restart() },
