@@ -74,21 +74,7 @@ class ShopViewModel(
             billingRepository.purchaseEvents.collect { result ->
                 when (result) {
                     is PurchaseResult.Success -> {
-                        when (result.productId) {
-                            BillingProduct.PremiumUpgrade.productId -> {
-                                appContainer.gameRepository.setPremiumUnlocked(true)
-                                appContainer.gameRepository.setAdsRemoved(true)
-                            }
-                            BillingProduct.RemoveAds.productId -> {
-                                appContainer.gameRepository.setAdsRemoved(true)
-                            }
-                            BillingProduct.HintPackSmall.productId -> {
-                                appContainer.gameRepository.addHints(5)
-                            }
-                            BillingProduct.HintPackLarge.productId -> {
-                                appContainer.gameRepository.addHints(20)
-                            }
-                        }
+                        // Unlocking/granting is handled app-wide by PurchaseProcessor.
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -138,11 +124,6 @@ class ShopViewModel(
 
     fun clearUserMessage() {
         _uiState.update { it.copy(userMessage = null) }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        billingRepository.endConnection()
     }
 
     companion object {
