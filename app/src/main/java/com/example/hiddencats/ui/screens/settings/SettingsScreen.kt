@@ -207,7 +207,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Delete Game History & Reset Data")
+                        Text("Delete My Data & Account")
                     }
                 }
 
@@ -219,8 +219,12 @@ fun SettingsScreen(
         if (uiState.showResetDialog) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissReset() },
-                title = { Text("Delete All Data?", fontWeight = FontWeight.Bold) },
-                text = { Text("This will permanently clear your puzzle history, statistics, and daily streak. This cannot be undone.") },
+                title = { Text("Delete My Data & Account?", fontWeight = FontWeight.Bold) },
+                text = {
+                    Text(
+                        "This permanently deletes your puzzle history, statistics, daily streak, settings, and hints from this device, and requests deletion of your anonymous cloud data. This cannot be undone.\n\nPurchases belong to your Google account: you can restore Premium and Remove Ads from the Shop afterwards. Used hints are not restored."
+                    )
+                },
                 confirmButton = {
                     Button(
                         onClick = { viewModel.confirmReset() },
@@ -239,11 +243,7 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { viewModel.showPrivacyPolicy(false) },
                 title = { Text("Privacy Policy", fontWeight = FontWeight.Bold) },
-                text = {
-                    Text(
-                        "Hidden Cats: Color Logic is committed to player privacy. We do not collect or share personal information, contacts, or location data. Game progress is stored locally on your device with optional anonymous cloud synchronization. In-app purchases are handled securely via Google Play Billing."
-                    )
-                },
+                text = { LegalDocumentView(PrivacyPolicyDoc) },
                 confirmButton = {
                     Button(onClick = { viewModel.showPrivacyPolicy(false) }) { Text("Close") }
                 }
@@ -254,11 +254,7 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { viewModel.showTerms(false) },
                 title = { Text("Terms of Service", fontWeight = FontWeight.Bold) },
-                text = {
-                    Text(
-                        "Hidden Cats: Color Logic is provided as-is for personal entertainment. All puzzle generation algorithms, artwork, and game logic are proprietary. Users agree to standard Google Play terms of distribution and safety."
-                    )
-                },
+                text = { LegalDocumentView(TermsOfServiceDoc) },
                 confirmButton = {
                     Button(onClick = { viewModel.showTerms(false) }) { Text("Close") }
                 }
