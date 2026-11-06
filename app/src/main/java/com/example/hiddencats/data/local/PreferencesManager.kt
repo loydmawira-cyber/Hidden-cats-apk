@@ -22,7 +22,7 @@ data class PlayerPreferences(
     val leftHandedMode: Boolean = false,
     val notificationsEnabled: Boolean = true,
     val cloudSyncEnabled: Boolean = true,
-    val hintBalance: Int = 5,
+    val hintBalance: Int = PreferencesManager.DEFAULT_HINTS,
     val adsRemoved: Boolean = false,
     val premiumUnlocked: Boolean = false,
     val playerName: String = "Cat Detective"
@@ -30,6 +30,9 @@ data class PlayerPreferences(
 
 class PreferencesManager(private val context: Context) {
     companion object {
+        /** Free starter hints. More come from rewarded ads or the shop. */
+        const val DEFAULT_HINTS = 3
+
         val KEY_SOUND = booleanPreferencesKey("sound_enabled")
         val KEY_MUSIC = booleanPreferencesKey("music_enabled")
         val KEY_HAPTICS = booleanPreferencesKey("haptics_enabled")
@@ -54,7 +57,7 @@ class PreferencesManager(private val context: Context) {
             leftHandedMode = prefs[KEY_LEFT_HANDED] ?: false,
             notificationsEnabled = prefs[KEY_NOTIFICATIONS] ?: true,
             cloudSyncEnabled = prefs[KEY_CLOUD_SYNC] ?: true,
-            hintBalance = prefs[KEY_HINT_BALANCE] ?: 5,
+            hintBalance = prefs[KEY_HINT_BALANCE] ?: DEFAULT_HINTS,
             adsRemoved = prefs[KEY_ADS_REMOVED] ?: false,
             premiumUnlocked = prefs[KEY_PREMIUM] ?: false,
             playerName = prefs[KEY_PLAYER_NAME] ?: "Cat Detective"
@@ -71,14 +74,14 @@ class PreferencesManager(private val context: Context) {
     suspend fun setCloudSyncEnabled(enabled: Boolean) = context.dataStore.edit { it[KEY_CLOUD_SYNC] = enabled }
 
     suspend fun addHints(amount: Int) = context.dataStore.edit { prefs ->
-        val current = prefs[KEY_HINT_BALANCE] ?: 5
+        val current = prefs[KEY_HINT_BALANCE] ?: DEFAULT_HINTS
         prefs[KEY_HINT_BALANCE] = (current + amount).coerceAtLeast(0)
     }
 
     suspend fun consumeHint(): Boolean {
         var consumed = false
         context.dataStore.edit { prefs ->
-            val current = prefs[KEY_HINT_BALANCE] ?: 5
+            val current = prefs[KEY_HINT_BALANCE] ?: DEFAULT_HINTS
             if (current > 0) {
                 prefs[KEY_HINT_BALANCE] = current - 1
                 consumed = true
