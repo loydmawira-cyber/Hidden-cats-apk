@@ -42,6 +42,9 @@ class PlayBillingRepository(
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>(replay = 0, extraBufferCapacity = 8)
     override val purchaseEvents: SharedFlow<PurchaseResult> = _purchaseEvents.asSharedFlow()
 
+    private val _ownedEntitlements = MutableStateFlow<Set<String>?>(null)
+    override val ownedEntitlements: StateFlow<Set<String>?> = _ownedEntitlements.asStateFlow()
+
     private val productDetailsMap = mutableMapOf<String, ProductDetails>()
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context.applicationContext)
@@ -169,6 +172,7 @@ class PlayBillingRepository(
                         }
                     }
                 } else {
+                    _ownedEntitlements.value?.let { _ownedEntitlements.value = it + productId }
                     if (!purchase.isAcknowledged) {
                         val ackParams = AcknowledgePurchaseParams.newBuilder()
                             .setPurchaseToken(purchase.purchaseToken)
@@ -200,6 +204,10 @@ class PlayBillingRepository(
 
         billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                _ownedEntitlements.value = purchasesList
+                    .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                    .flatMap { it.products }
+                    .toSet()
                 var restored = 0
                 for (purchase in purchasesList) {
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {

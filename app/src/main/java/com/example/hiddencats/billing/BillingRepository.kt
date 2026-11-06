@@ -9,6 +9,9 @@ interface BillingRepository {
     val productPrices: StateFlow<Map<String, String>>
     val purchaseEvents: SharedFlow<PurchaseResult>
 
+    /** Product IDs Google Play says this account owns. Null until the first successful check. */
+    val ownedEntitlements: StateFlow<Set<String>?>
+
     fun startConnection()
     fun queryProductDetails()
     fun launchBillingFlow(activity: Activity?, productId: String)

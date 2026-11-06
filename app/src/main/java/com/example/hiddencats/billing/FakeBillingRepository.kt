@@ -26,6 +26,9 @@ class FakeBillingRepository(
     private val _purchaseEvents = MutableSharedFlow<PurchaseResult>(replay = 0, extraBufferCapacity = 8)
     override val purchaseEvents: SharedFlow<PurchaseResult> = _purchaseEvents.asSharedFlow()
 
+    private val _ownedEntitlements = MutableStateFlow<Set<String>?>(null)
+    override val ownedEntitlements: StateFlow<Set<String>?> = _ownedEntitlements.asStateFlow()
+
     val ownedNonConsumables = mutableSetOf<String>()
 
     override fun startConnection() {
@@ -48,6 +51,7 @@ class FakeBillingRepository(
 
         if (!product.isConsumable) {
             ownedNonConsumables.add(productId)
+            _ownedEntitlements.value = ownedNonConsumables.toSet()
         }
 
         scope.launch {
@@ -56,6 +60,7 @@ class FakeBillingRepository(
     }
 
     override fun restorePurchases(onComplete: (count: Int) -> Unit) {
+        _ownedEntitlements.value = ownedNonConsumables.toSet()
         scope.launch {
             for (id in ownedNonConsumables) {
                 _purchaseEvents.emit(PurchaseResult.Success(id))
