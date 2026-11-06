@@ -1,6 +1,10 @@
 package com.example.hiddencats.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.hiddencats.core.findActivity
+import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -31,6 +35,9 @@ fun NavGraph(
     navController: NavHostController,
     appContainer: AppContainer
 ) {
+    val scope = rememberCoroutineScope()
+    val activity = LocalContext.current.findActivity()
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
@@ -110,7 +117,9 @@ fun NavGraph(
             GameScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateShop = { navController.navigate(Screen.Shop.route) },
                 onGameFinished = { gameState ->
+                    appContainer.adsController.onPuzzleFinished()
                     val won = gameState.isCompleted && !gameState.isGameOver
                     navController.navigate(
                         Screen.Results.createRoute(
@@ -168,27 +177,33 @@ fun NavGraph(
                 difficulty = diffStr,
                 mode = modeStr,
                 onPlayAgain = {
-                    navController.navigate(
-                        Screen.Game.createRoute(
-                            mode = modeStr,
-                            difficulty = diffStr,
-                            boardSize = boardDimension,
-                            isDaily = isDailyMode
-                        )
-                    ) {
-                        popUpTo(Screen.Results.route) { inclusive = true }
+                    scope.launch {
+                        appContainer.adsController.showInterstitialIfDue(activity)
+                        navController.navigate(
+                            Screen.Game.createRoute(
+                                mode = modeStr,
+                                difficulty = diffStr,
+                                boardSize = boardDimension,
+                                isDaily = isDailyMode
+                            )
+                        ) {
+                            popUpTo(Screen.Results.route) { inclusive = true }
+                        }
                     }
                 },
                 onNextPuzzle = {
-                    navController.navigate(
-                        Screen.Game.createRoute(
-                            mode = if (isDailyMode) GameMode.CLASSIC.name else modeStr,
-                            difficulty = diffStr,
-                            boardSize = boardDimension,
-                            isDaily = false
-                        )
-                    ) {
-                        popUpTo(Screen.Results.route) { inclusive = true }
+                    scope.launch {
+                        appContainer.adsController.showInterstitialIfDue(activity)
+                        navController.navigate(
+                            Screen.Game.createRoute(
+                                mode = if (isDailyMode) GameMode.CLASSIC.name else modeStr,
+                                difficulty = diffStr,
+                                boardSize = boardDimension,
+                                isDaily = false
+                            )
+                        ) {
+                            popUpTo(Screen.Results.route) { inclusive = true }
+                        }
                     }
                 },
                 onGoHome = {
