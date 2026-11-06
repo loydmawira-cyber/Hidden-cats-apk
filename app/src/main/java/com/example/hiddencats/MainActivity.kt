@@ -27,8 +27,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        appContainer = AppContainer(applicationContext)
+        appContainer = AppContainer.getInstance(applicationContext)
         appContainer.adsController.initialize(this)
+        appContainer.purchaseProcessor.start()
 
         setContent {
             val prefs by appContainer.preferencesManager.preferencesFlow.collectAsState(initial = PlayerPreferences())
