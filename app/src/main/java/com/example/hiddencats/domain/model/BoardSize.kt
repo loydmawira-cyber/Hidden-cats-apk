@@ -8,6 +8,9 @@ enum class BoardSize(val dimension: Int, val defaultCats: Int, val defaultColors
     EIGHT(8, defaultCats = 7, defaultColors = 5, label = "8 x 8"),
     NINE(9, defaultCats = 8, defaultColors = 6, label = "9 x 9");
 
+    /** 8x8 and 9x9 are Premium-only. */
+    val requiresPremium: Boolean get() = dimension >= 8
+
     companion object {
         fun fromDimension(dim: Int): BoardSize {
             return entries.find { it.dimension == dim } ?: SIX
