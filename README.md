@@ -47,7 +47,7 @@ Cats are hiding across a grid divided into distinct colors. Indicators at the ed
 - **Cloud Backend:**
   - **Firebase Authentication:** Anonymous sign-in with seamless offline fallback.
   - **Cloud Firestore:** Remote stats sync, streak backup, and leaderboards.
-- **In-App Billing:** Google Play Billing Library 7.1.1 (Premium Unlock, Ad Removal, Hint Packs) with full simulated test harness.
+- **In-App Billing:** Google Play Billing Library 8.3.0 (Premium Unlock, Ad Removal, Hint Packs) with full simulated test harness.
 - **Accessibility:** Color-blind pattern overlays, 48dp touch targets, TalkBack semantics, high-contrast markers.
 
 ---
