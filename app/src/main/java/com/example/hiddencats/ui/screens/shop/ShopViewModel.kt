@@ -8,6 +8,7 @@ import com.example.hiddencats.billing.BillingProduct
 import com.example.hiddencats.billing.BillingRepository
 import com.example.hiddencats.billing.PurchaseResult
 import com.example.hiddencats.core.AppContainer
+import com.example.hiddencats.data.local.PreferencesManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -23,7 +24,7 @@ data class ShopUiState(
     val products: List<ShopProductUiModel> = emptyList(),
     val isPremium: Boolean = false,
     val adsRemoved: Boolean = false,
-    val hintBalance: Int = 5,
+    val hintBalance: Int = PreferencesManager.DEFAULT_HINTS,
     val isLoading: Boolean = false,
     val userMessage: String? = null
 )
