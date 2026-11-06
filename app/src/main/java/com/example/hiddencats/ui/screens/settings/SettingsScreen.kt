@@ -207,7 +207,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Delete My Data & Account")
+                        Text("Delete My Data")
                     }
                 }
 
@@ -219,10 +219,10 @@ fun SettingsScreen(
         if (uiState.showResetDialog) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissReset() },
-                title = { Text("Delete My Data & Account?", fontWeight = FontWeight.Bold) },
+                title = { Text("Delete My Data?", fontWeight = FontWeight.Bold) },
                 text = {
                     Text(
-                        "This permanently deletes your puzzle history, statistics, daily streak, settings, and hints from this device, and requests deletion of your anonymous cloud data. This cannot be undone.\n\nPurchases belong to your Google account: you can restore Premium and Remove Ads from the Shop afterwards. Used hints are not restored."
+                        "This permanently deletes your puzzle history, statistics, daily streak, settings, and hints from this device, and requests deletion of your anonymous cloud data. This cannot be undone.\n\nPremium and Remove Ads belong to your Google account and will be restored automatically. Used hints are not restored."
                     )
                 },
                 confirmButton = {

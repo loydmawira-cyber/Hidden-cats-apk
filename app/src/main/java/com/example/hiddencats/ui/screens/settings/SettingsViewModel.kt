@@ -3,6 +3,7 @@ package com.example.hiddencats.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.hiddencats.billing.BillingRepository
 import com.example.hiddencats.core.AppContainer
 import com.example.hiddencats.core.SoundHapticsManager
 import com.example.hiddencats.data.GameRepository
@@ -24,7 +25,8 @@ data class SettingsUiState(
 
 class SettingsViewModel(
     private val repository: GameRepository,
-    private val soundHaptics: SoundHapticsManager
+    private val soundHaptics: SoundHapticsManager,
+    private val billingRepository: BillingRepository
 ) : ViewModel() {
 
     private val _showResetDialog = MutableStateFlow(false)
@@ -63,6 +65,8 @@ class SettingsViewModel(
     fun confirmReset() {
         viewModelScope.launch {
             repository.resetAllData()
+            // Premium / Remove Ads belong to the Google account: bring them straight back.
+            billingRepository.restorePurchases()
             _showResetDialog.value = false
         }
     }
@@ -77,7 +81,8 @@ class SettingsViewModel(
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return SettingsViewModel(
                         repository = appContainer.gameRepository,
-                        soundHaptics = appContainer.soundHapticsManager
+                        soundHaptics = appContainer.soundHapticsManager,
+                        billingRepository = appContainer.billingRepository
                     ) as T
                 }
             }

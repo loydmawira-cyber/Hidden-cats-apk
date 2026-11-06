@@ -98,7 +98,7 @@ val PrivacyPolicyDoc = LegalDoc(
             "6. Retention and deletion",
             listOf(
             "• Data on your device stays until you delete it in the app, clear the app's storage, or uninstall the Game.",
-            "• Cloud data tied to your anonymous identifier is kept until you delete it. You can delete everything at any time from Settings > Data Management > Delete My Data & Account. This clears your device data and requests deletion of your cloud data.",
+            "• Cloud data tied to your anonymous identifier is kept until you delete it. You can delete everything at any time from Settings > Data Management > Delete My Data. This clears your device data and requests deletion of your cloud data.",
             "• You can also ask us to delete data by emailing smarttechlab.apps@gmail.com. We aim to complete requests within 30 days. Full instructions: see our Account and Data Deletion page.",
             "• Purchase records are held by Google Play under Google's policies. After deleting your data you can restore purchases from the Shop because they belong to your Google account.",
             "• Ad and diagnostic data held by Google is retained under Google's own policies."
