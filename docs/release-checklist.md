@@ -31,22 +31,22 @@ This release checklist guides the developer through publishing **Find the Cat** 
 ---
 
 ## 3. In-App Products Setup (Google Play Billing)
-In the Google Play Console under **Monetize > In-app products**, create the 4 configured items:
-1. `hint_pack_5`
+In the Google Play Console under **Monetize > In-app products**, create the 4 configured items (IDs must match `BillingProduct.kt` exactly):
+1. `hint_pack_small`
    - Type: Consumable
    - Name: Pouch of 5 Hints
    - Price: $0.99
-2. `hint_pack_15`
+2. `hint_pack_large`
    - Type: Consumable
-   - Name: Basket of 15 Hints (Best Value)
-   - Price: $1.99
+   - Name: Basket of 20 Hints (Best Value)
+   - Price: $2.49
 3. `remove_ads`
    - Type: Non-consumable
-   - Name: Remove All Ads
-   - Price: $2.99
-4. `premium_unlock`
+   - Name: Remove Ads
+   - Price: $1.99
+4. `premium_upgrade`
    - Type: Non-consumable
-   - Name: Master Detective Pack (Unlock All Levels & Unlimited Hints)
+   - Name: Master Detective Pack (8x8 & 9x9 boards, unlimited hints, no ads)
    - Price: $4.99
 
 - [ ] Add License Testers under **Setup > License Testing** with `RESPOND_NORMALLY` to verify purchase states without real charges.
