@@ -10,7 +10,7 @@ sealed class BillingProduct(
     data object PremiumUpgrade : BillingProduct(
         productId = "premium_upgrade",
         title = "Premium Detective Pass",
-        description = "Unlock all board sizes (up to 9x9), infinite hints, and ad-free experience",
+        description = "Unlock 8x8 and 9x9 boards, unlimited hints, and no ads",
         defaultPriceFormatted = "$4.99",
         isConsumable = false
     )
@@ -34,7 +34,7 @@ sealed class BillingProduct(
     data object RemoveAds : BillingProduct(
         productId = "remove_ads",
         title = "Remove All Ads",
-        description = "Enjoy clean, uninterrupted cozy puzzle gameplay forever",
+        description = "No more ads between puzzles (watching an ad for a free hint stays optional)",
         defaultPriceFormatted = "$1.99",
         isConsumable = false
     )
