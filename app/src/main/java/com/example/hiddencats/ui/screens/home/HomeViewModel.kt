@@ -7,6 +7,7 @@ import com.example.hiddencats.core.AppContainer
 import com.example.hiddencats.core.SoundHapticsManager
 import com.example.hiddencats.data.GameRepository
 import com.example.hiddencats.data.local.PlayerPreferences
+import com.example.hiddencats.data.local.PreferencesManager
 import com.example.hiddencats.domain.model.BoardSize
 import com.example.hiddencats.domain.model.Difficulty
 import com.example.hiddencats.domain.model.GameMode
@@ -24,7 +25,7 @@ data class HomeUiState(
     val selectedBoardSize: BoardSize = BoardSize.SIX,
     val totalGames: Int = 0,
     val totalWins: Int = 0,
-    val hintBalance: Int = 5,
+    val hintBalance: Int = PreferencesManager.DEFAULT_HINTS,
     val isDailyCompleted: Boolean = false,
     val preferences: PlayerPreferences = PlayerPreferences()
 )
@@ -78,15 +79,24 @@ class HomeViewModel(
         soundHaptics.playCellSelect()
     }
 
+    private val isPremium: Boolean get() = uiState.value.preferences.premiumUnlocked
+
+    fun isBoardLocked(size: BoardSize): Boolean = size.requiresPremium && !isPremium
+
     fun selectDifficulty(difficulty: Difficulty) {
         _selectedDifficulty.value = difficulty
-        _selectedBoardSize.value = difficulty.recommendedBoardSize()
+        // Free players get the largest free board for Expert instead of a locked one.
+        val recommended = difficulty.recommendedBoardSize()
+        _selectedBoardSize.value = if (isBoardLocked(recommended)) BoardSize.SEVEN else recommended
         soundHaptics.playCellSelect()
     }
 
-    fun selectBoardSize(size: BoardSize) {
+    /** Returns false (and changes nothing) when the size is locked behind Premium. */
+    fun selectBoardSize(size: BoardSize): Boolean {
+        if (isBoardLocked(size)) return false
         _selectedBoardSize.value = size
         soundHaptics.playCellSelect()
+        return true
     }
 
     fun onButtonClicked() {
