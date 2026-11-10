@@ -136,7 +136,11 @@ fun CellView(
             enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)) + fadeIn(tween(120)),
             exit = scaleOut(tween(120)) + fadeOut(tween(120))
         ) {
-            CatFaceIcon(size = cellSize * 0.76f)
+            CatFaceIcon(
+                size = cellSize * 0.76f,
+                catColor = animatedBgColor.darken(0.42f),
+                innerEarColor = animatedBgColor.lighten(0.12f)
+            )
         }
 
         when (cell.state) {

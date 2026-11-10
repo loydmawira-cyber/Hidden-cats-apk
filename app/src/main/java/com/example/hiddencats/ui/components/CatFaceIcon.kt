@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -27,6 +29,12 @@ fun CatFaceIcon(
         val cy = h * 0.55f
         val headRadius = w * 0.35f
         val earSize = headRadius * 0.7f
+        val outline = Color(0xFF2A211D)
+        val fur = Brush.radialGradient(
+            colors = listOf(catColor.lighten(0.28f), catColor, catColor.darken(0.38f)),
+            center = Offset(cx - headRadius * 0.32f, cy - headRadius * 0.42f),
+            radius = headRadius * 1.65f
+        )
 
         // Left ear
         val leftEar = Path().apply {
@@ -35,8 +43,8 @@ fun CatFaceIcon(
             lineTo(cx - headRadius * 0.1f, cy - headRadius * 0.7f)
             close()
         }
-        drawPath(leftEar, catColor, style = Fill)
-        drawPath(leftEar, Color(0xFF1C1917), style = Stroke(width = 2.5f))
+        drawPath(leftEar, fur, style = Fill)
+        drawPath(leftEar, outline, style = Stroke(width = 2.5f))
 
         // Left inner ear
         val leftInner = Path().apply {
@@ -54,8 +62,8 @@ fun CatFaceIcon(
             lineTo(cx + headRadius * 0.75f, cy - headRadius * 0.2f)
             close()
         }
-        drawPath(rightEar, catColor, style = Fill)
-        drawPath(rightEar, Color(0xFF1C1917), style = Stroke(width = 2.5f))
+        drawPath(rightEar, fur, style = Fill)
+        drawPath(rightEar, outline, style = Stroke(width = 2.5f))
 
         // Right inner ear
         val rightInner = Path().apply {
@@ -67,29 +75,42 @@ fun CatFaceIcon(
         drawPath(rightInner, innerEarColor, style = Fill)
 
         // Head
-        drawCircle(color = catColor, radius = headRadius, center = Offset(cx, cy))
-        drawCircle(color = Color(0xFF1C1917), radius = headRadius, center = Offset(cx, cy), style = Stroke(width = 2.5f))
+        drawCircle(brush = fur, radius = headRadius, center = Offset(cx, cy))
+        drawCircle(color = outline, radius = headRadius, center = Offset(cx, cy), style = Stroke(width = 2.5f))
+        // Soft tabby markings add depth so the revealed cat reads as a cat, not a flat badge.
+        val stripe = outline.copy(alpha = 0.38f)
+        for (offset in listOf(-0.24f, 0f, 0.24f)) {
+            drawLine(
+                stripe,
+                Offset(cx + headRadius * offset, cy - headRadius * 0.82f),
+                Offset(cx + headRadius * offset * 0.72f, cy - headRadius * 0.52f),
+                strokeWidth = 1.8f
+            )
+        }
 
         // Eyes
         val eyeSpacing = headRadius * 0.38f
         val eyeY = cy - headRadius * 0.08f
         val eyeRadius = headRadius * 0.18f
-        drawCircle(color = eyeColor, radius = eyeRadius, center = Offset(cx - eyeSpacing, eyeY))
-        drawCircle(color = eyeColor, radius = eyeRadius, center = Offset(cx + eyeSpacing, eyeY))
+        drawOval(brush = Brush.radialGradient(listOf(Color.White, eyeColor)), topLeft = Offset(cx - eyeSpacing - eyeRadius, eyeY - eyeRadius), size = Size(eyeRadius * 2f, eyeRadius * 2.25f))
+        drawOval(brush = Brush.radialGradient(listOf(Color.White, eyeColor)), topLeft = Offset(cx + eyeSpacing - eyeRadius, eyeY - eyeRadius), size = Size(eyeRadius * 2f, eyeRadius * 2.25f))
+        drawCircle(color = Color.Black.copy(alpha = 0.78f), radius = eyeRadius * 0.38f, center = Offset(cx - eyeSpacing, eyeY))
+        drawCircle(color = Color.Black.copy(alpha = 0.78f), radius = eyeRadius * 0.38f, center = Offset(cx + eyeSpacing, eyeY))
         // Catchlights
         drawCircle(color = Color.White, radius = eyeRadius * 0.35f, center = Offset(cx - eyeSpacing - 1.5f, eyeY - 1.5f))
         drawCircle(color = Color.White, radius = eyeRadius * 0.35f, center = Offset(cx + eyeSpacing - 1.5f, eyeY - 1.5f))
 
         // Nose
         val noseY = cy + headRadius * 0.18f
+        drawOval(color = Color.White.copy(alpha = 0.16f), topLeft = Offset(cx - headRadius * 0.34f, noseY - headRadius * 0.02f), size = Size(headRadius * 0.68f, headRadius * 0.34f))
         drawCircle(color = innerEarColor, radius = headRadius * 0.12f, center = Offset(cx, noseY))
 
         // Whiskers
         val whiskerLen = headRadius * 0.5f
-        drawLine(Color(0xFF1C1917), Offset(cx - headRadius * 0.25f, noseY), Offset(cx - headRadius * 0.25f - whiskerLen, noseY - 2f), strokeWidth = 1.5f)
-        drawLine(Color(0xFF1C1917), Offset(cx - headRadius * 0.25f, noseY + 3f), Offset(cx - headRadius * 0.25f - whiskerLen, noseY + 5f), strokeWidth = 1.5f)
-        drawLine(Color(0xFF1C1917), Offset(cx + headRadius * 0.25f, noseY), Offset(cx + headRadius * 0.25f + whiskerLen, noseY - 2f), strokeWidth = 1.5f)
-        drawLine(Color(0xFF1C1917), Offset(cx + headRadius * 0.25f, noseY + 3f), Offset(cx + headRadius * 0.25f + whiskerLen, noseY + 5f), strokeWidth = 1.5f)
+        drawLine(outline, Offset(cx - headRadius * 0.25f, noseY), Offset(cx - headRadius * 0.25f - whiskerLen, noseY - 2f), strokeWidth = 1.5f)
+        drawLine(outline, Offset(cx - headRadius * 0.25f, noseY + 3f), Offset(cx - headRadius * 0.25f - whiskerLen, noseY + 5f), strokeWidth = 1.5f)
+        drawLine(outline, Offset(cx + headRadius * 0.25f, noseY), Offset(cx + headRadius * 0.25f + whiskerLen, noseY - 2f), strokeWidth = 1.5f)
+        drawLine(outline, Offset(cx + headRadius * 0.25f, noseY + 3f), Offset(cx + headRadius * 0.25f + whiskerLen, noseY + 5f), strokeWidth = 1.5f)
     }
 }
 
