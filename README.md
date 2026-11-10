@@ -14,7 +14,7 @@ Cats are hiding across a grid divided into distinct colors. Indicators at the ed
 
 ### Core Rules
 1. **Adjacency:** Cats are territorial. Two cats can **never touch** horizontally, vertically, or diagonally (8-neighbor restriction).
-2. **Color Uniqueness:** Within any **row** or **column**, no two cats may share the **same color** cell.
+2. **Color Uniqueness:** Every active color on the board hides exactly **one cat across the entire puzzle**. This means puzzles with more colors contain more cats; no color can contain a second cat.
 3. **Line Counts:** The number of cats placed in each row and column must exactly equal the row and column clue numbers.
 4. **Marking States:**
    - ❓ **Unknown:** Cell has not yet been marked.
