@@ -62,7 +62,7 @@ fun RulesScreen(
             RuleCard(
                 number = "1",
                 title = "The Objective",
-                description = "Each row and column has a number indicator showing exactly how many cats are hiding in that line. Find all cats to solve the puzzle!",
+                description = "Each row and column has a number indicator showing exactly how many cats are hiding in that line. There is one cat for every color used on the board—more colors means more cats!",
                 badgeColor = MaterialTheme.colorScheme.primary
             ) {
                 Row(
@@ -147,7 +147,7 @@ fun RulesScreen(
             RuleCard(
                 number = "3",
                 title = "Color Uniqueness Rule",
-                description = "Within the SAME ROW or the SAME COLUMN, no two cats may sit on the SAME COLOR cell.",
+                description = "Every color hides exactly ONE cat across the entire puzzle. A color can never contain a second cat, even in another row or column.",
                 badgeColor = Color(0xFF64B5F6)
             ) {
                 Column(
@@ -201,7 +201,7 @@ fun RulesScreen(
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "If a row already has a cat on Coral, other Coral cells in that row are empty!",
+                        "If the Coral cat has been found, every other Coral cell on the entire board is empty!",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
