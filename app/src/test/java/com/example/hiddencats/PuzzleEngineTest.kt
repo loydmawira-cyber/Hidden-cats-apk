@@ -88,6 +88,20 @@ class PuzzleEngineTest {
                 colCounts = puzzle.colCatCounts
             )
         )
+        val catColors = puzzle.grid.flatten().filter { it.hasCat }.map { it.color }
+        assertEquals("There must be one cat for each active color", puzzle.totalCats, catColors.toSet().size)
+        assertEquals(PuzzleGenerator.targetCatsFor(BoardSize.FOUR, Difficulty.EASY), puzzle.totalCats)
+    }
+
+    @Test
+    fun `global color uniqueness rejects a second cat of an existing color`() {
+        val solver = PuzzleSolver()
+        val colors = listOf(
+            listOf(CellColor.CORAL, CellColor.SKY, CellColor.MINT),
+            listOf(CellColor.LAVENDER, CellColor.AMBER, CellColor.TANGERINE),
+            listOf(CellColor.SKY, CellColor.MINT, CellColor.CORAL)
+        )
+        assertFalse(solver.validateFullBoard(colors, setOf(0 to 0, 2 to 2)))
     }
 
     @Test
