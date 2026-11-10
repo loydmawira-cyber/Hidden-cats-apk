@@ -14,12 +14,10 @@ class PuzzleGenerator(
 ) {
 
     companion object {
-        /** Cats hidden on a board for the given size and difficulty. */
+        /** Each active color hides exactly one cat across the whole puzzle. */
         fun targetCatsFor(size: BoardSize, difficulty: Difficulty): Int = when (difficulty) {
-            Difficulty.EASY -> (size.defaultCats - 1).coerceAtLeast(2)
-            Difficulty.NORMAL -> size.defaultCats
-            Difficulty.HARD -> size.defaultCats
-            Difficulty.EXPERT -> (size.defaultCats + 1).coerceAtMost(size.dimension)
+            Difficulty.EASY, Difficulty.NORMAL -> size.defaultColors
+            Difficulty.HARD, Difficulty.EXPERT -> (size.defaultColors + 1).coerceAtMost(CellColor.entries.size)
         }
 
         private const val MAX_ATTEMPTS = 3000
@@ -44,7 +42,8 @@ class PuzzleGenerator(
             Difficulty.EXPERT -> (size.defaultColors + 1).coerceAtMost(CellColor.entries.size)
         }
         val colors = CellColor.palette(numColors)
-        val targetCats = targetCatsFor(size, difficulty)
+        // The number of cats is intentionally tied to the palette, not the board size.
+        val targetCats = numColors
 
         repeat(MAX_ATTEMPTS) {
             val placedCats = placeCats(dimension, targetCats, random) ?: return@repeat
@@ -136,6 +135,12 @@ class PuzzleGenerator(
     ): List<List<CellColor>>? {
         val grid = Array(dimension) { Array(dimension) { palette.random(random) } }
 
+        // Assign every active color to exactly one cat cell. Non-cat cells may repeat colors.
+        val shuffledCatColors = palette.shuffled(random)
+        cats.toList().shuffled(random).forEachIndexed { index, (r, c) ->
+            grid[r][c] = shuffledCatColors[index]
+        }
+
         // Cats sharing a row/column must have different colours
         var settled = false
         for (pass in 0 until 40) {
@@ -196,10 +201,16 @@ class PuzzleGenerator(
         val rowCounts = (0 until dim).map { row -> placedCats.count { it.first == row } }
         val colCounts = (0 until dim).map { col -> placedCats.count { it.second == col } }
 
+        val fallbackCatColors = palette.shuffled(Random(seed))
         for (row in 0 until dim) {
             val rowList = mutableListOf<Cell>()
             for (col in 0 until dim) {
-                val color = palette[(row * 2 + col) % palette.size]
+                val catIndex = placedCats.indexOf(row to col)
+                val color = if (catIndex >= 0) {
+                    fallbackCatColors[catIndex]
+                } else {
+                    palette[(row * 2 + col) % palette.size]
+                }
                 rowList.add(
                     Cell(
                         row = row,

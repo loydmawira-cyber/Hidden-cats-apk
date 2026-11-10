@@ -83,6 +83,10 @@ class PuzzleSolver {
             }
         }
 
+        // Global rule: every color can contain at most one cat on the entire board.
+        val catColors = cats.map { (r, c) -> colorGrid[r][c] }
+        if (catColors.size != catColors.toSet().size) return false
+
         val checked = mutableSetOf<Pair<Int, Int>>()
         for ((r, c) in cats) {
             if (!isPlacementValid(r, c, colorGrid, checked)) {
@@ -114,6 +118,7 @@ class PuzzleSolver {
         val solutions = mutableListOf<Set<Pair<Int, Int>>>()
         val colUsed = IntArray(dim)
         val colColors = Array(dim) { mutableSetOf<CellColor>() }
+        val usedColors = mutableSetOf<CellColor>()
         val chosen = Array<List<Int>>(dim) { emptyList() }
 
         fun backtrack(r: Int) {
@@ -130,10 +135,19 @@ class PuzzleSolver {
             for (combo in rowOptions[r]) {
                 if (combo.any { c -> prev.any { p -> kotlin.math.abs(c - p) <= 1 } }) continue
                 if (combo.any { c -> colUsed[c] + 1 > colCounts[c] || colorGrid[r][c] in colColors[c] }) continue
-                for (c in combo) { colUsed[c]++; colColors[c].add(colorGrid[r][c]) }
+                if (combo.map { colorGrid[r][it] }.any { it in usedColors }) continue
+                for (c in combo) {
+                    colUsed[c]++
+                    colColors[c].add(colorGrid[r][c])
+                    usedColors.add(colorGrid[r][c])
+                }
                 chosen[r] = combo
                 backtrack(r + 1)
-                for (c in combo) { colUsed[c]--; colColors[c].remove(colorGrid[r][c]) }
+                for (c in combo) {
+                    colUsed[c]--
+                    colColors[c].remove(colorGrid[r][c])
+                    usedColors.remove(colorGrid[r][c])
+                }
                 chosen[r] = emptyList()
                 if (solutions.size >= limit) return
             }
